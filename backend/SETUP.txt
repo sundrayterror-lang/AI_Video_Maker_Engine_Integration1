@@ -1,0 +1,37 @@
+AI VIDEO MAKER — SECURE VIDEO BACKEND
+
+What this adds
+- Secure Node.js backend for image-to-video.
+- Android app uploads the chosen image and motion prompt to your backend.
+- Backend uploads the image to the provider, submits an AI video job, and checks its status.
+- The provider secret stays on the server, not inside the Android APK.
+
+Provider
+This integration uses fal.ai's `fal-ai/ovi/image-to-video` model. The provider's current docs show image_url + prompt input and a queue-based API. Pricing/account terms can change; check them before use. Each generated video may incur a charge.
+
+IMPORTANT FOR SETUP
+A real online AI generator cannot run until an adult or account owner has:
+1. Set up an approved provider account and reviewed its age, billing, and usage terms.
+2. Added the provider key as a private server environment variable named FAL_KEY.
+3. Deployed this backend to an HTTPS Node.js host.
+4. Set API_BASE in android/app/src/main/assets/index.html to the backend's HTTPS address.
+5. Rebuilt the Android APK.
+
+Run backend locally
+- Install Node.js 20 or newer.
+- In this folder run: npm install
+- Set FAL_KEY in your shell/server environment (do not paste it into the app).
+- Run: npm start
+- Health check: http://localhost:3000/health
+
+Android connection
+- Edit API_BASE in the app's index.html to your deployed HTTPS backend URL, e.g. https://your-service.example
+- Rebuild the Android app in Android Studio.
+
+Security notes
+- This starter uses in-memory job tracking; restarting the server clears its job map.
+- Add authentication, per-user quotas, rate limits, logging controls, and persistent job storage before public release.
+- Do not expose provider keys or raw uploaded images publicly.
+- CORS is permissive for initial testing. Restrict ALLOWED_ORIGIN when the app is served from a stable web origin.
+- The image-to-video route accepts JPG, PNG, and WEBP, max 10 MB.
+- Text-to-video is not connected in this version.

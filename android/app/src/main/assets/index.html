@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#10091d"><title>AI Video Maker</title>
+<style>
+:root{color-scheme:dark;--bg:#10091d;--panel:#1b1230;--purple:#a879ff;--text:#f8f4ff;--muted:#b8a9ce}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,#38205c 0,transparent 36%),var(--bg);color:var(--text);font:15px system-ui,sans-serif}
+main{max-width:520px;margin:auto;padding:22px 17px 40px}.top{display:flex;justify-content:space-between;align-items:center}.brand{font-weight:800;font-size:19px}.pill{font-size:11px;color:#d7c3ff;border:1px solid #60458c;border-radius:30px;padding:6px 10px}
+h1{font-size:32px;line-height:1.1;margin:28px 0 8px}.sub{color:var(--muted);margin:0 0 22px;line-height:1.5}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:17px}.tab{background:var(--panel);border:1px solid #392852;border-radius:13px;padding:13px;color:var(--muted);font-weight:700}.tab.active{background:#35204f;color:white;border-color:var(--purple)}
+.card{background:rgba(27,18,48,.94);border:1px solid #392852;border-radius:18px;padding:16px;margin:12px 0}.label{font-weight:700;margin-bottom:10px;display:block}
+.upload{border:1.5px dashed #7655a4;border-radius:14px;min-height:170px;display:flex;align-items:center;justify-content:center;text-align:center;padding:14px;background:#170f27}
+.upload img{max-width:100%;max-height:230px;border-radius:10px;display:none}.upload input{display:none}.upload .hint{color:var(--muted);line-height:1.5}
+textarea,select{width:100%;background:#120c20;border:1px solid #493362;border-radius:12px;padding:12px;color:white;font:inherit}textarea{min-height:94px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;border-radius:13px;padding:14px 16px;font-weight:800;font-size:15px;width:100%;background:linear-gradient(100deg,#8b55e8,#bd83ff);color:#160b25;margin-top:12px}
+.note{font-size:12px;color:var(--muted);line-height:1.5}.status{padding:12px;border-radius:12px;background:#170f27;color:#d7c3ff;margin-top:12px;display:none;line-height:1.5}
+video{width:100%;border-radius:12px;margin-top:12px;background:#080510;display:none}.download{display:none;color:#d7c3ff;margin-top:10px}
+</style></head><body><main>
+<div class="top"><div class="brand">✦ AI STUDIO</div><div class="pill">VIDEO CREATOR</div></div>
+<h1>Create anything.</h1><p class="sub">Animate a picture with an AI video model.</p>
+<div class="tabs"><button class="tab active" id="imageTab" onclick="setMode('image')">▧ Image to Video</button><button class="tab" id="textTab" onclick="setMode('text')">▷ Text to Video</button></div>
+<section class="card" id="imageCard"><label class="label">Choose a picture</label><label class="upload" for="photo"><span class="hint" id="hint">＋<br><b>Tap to upload an image</b><br>JPG, PNG or WEBP</span><img id="preview" alt="Selected image preview"></label><input id="photo" type="file" accept="image/jpeg,image/png,image/webp" onchange="previewImage(event)"></section>
+<section class="card"><label class="label" for="prompt">Describe the motion</label><textarea id="prompt" placeholder="Example: The clouds drift slowly, leaves move in the wind, and the camera gently pushes in..."></textarea>
+<div class="row" style="margin-top:12px"><div><label class="label" for="duration">Duration</label><select id="duration"><option value="5">5 seconds</option><option value="10">10 seconds</option></select></div><div><label class="label" for="ratio">Aspect ratio</label><select id="ratio"><option>16:9</option><option>9:16</option><option>1:1</option></select></div></div>
+<button class="btn" id="generateBtn" onclick="generate()">✦ Generate Video</button><div class="status" id="status"></div><video id="resultVideo" controls playsinline></video><a class="download" id="downloadLink" download="ai-video.mp4">Download video</a>
+</section>
+<section class="card"><b>My creations</b><p class="note">Completed videos appear above. Save them to your phone using Download video.</p></section>
+<p class="note">AI generation runs through your secure backend. The provider key is never stored in this Android app. The text-to-video tab is shown as a future feature; this version currently connects image-to-video.</p>
+</main>
+<script>
+/* Set this to your deployed HTTPS backend address after deployment. */
+const API_BASE = "https://YOUR-BACKEND-DOMAIN";
+let mode='image', selectedFile=null;
+function setMode(m){
+ mode=m;document.getElementById('imageCard').style.display=m==='image'?'block':'none';
+ document.getElementById('imageTab').classList.toggle('active',m==='image');document.getElementById('textTab').classList.toggle('active',m==='text');
+ document.getElementById('prompt').placeholder=m==='image'?'Describe how the picture should move...':'Text-to-video will be added in a later engine update.';
+}
+function previewImage(e){selectedFile=e.target.files[0];if(!selectedFile)return;const img=document.getElementById('preview');img.src=URL.createObjectURL(selectedFile);img.style.display='block';document.getElementById('hint').style.display='none';}
+function showStatus(t){const s=document.getElementById('status');s.style.display='block';s.textContent=t;}
+async function generate(){
+ const prompt=document.getElementById('prompt').value.trim();
+ if(mode!=='image'){showStatus('Text-to-video is not connected in this version. Image-to-video is ready once the backend is deployed.');return;}
+ if(!selectedFile){showStatus('Choose an image first.');return;}
+ if(!prompt){showStatus('Describe the movement first.');return;}
+ if(API_BASE.includes('YOUR-BACKEND-DOMAIN')){showStatus('Backend not deployed yet. Follow backend/SETUP.txt to deploy it, then replace API_BASE in this app.');return;}
+ const btn=document.getElementById('generateBtn');btn.disabled=true;btn.textContent='Uploading image…';
+ document.getElementById('resultVideo').style.display='none';document.getElementById('downloadLink').style.display='none';
+ try{
+  const form=new FormData();form.append('image',selectedFile);form.append('prompt',prompt);
+  const start=await fetch(API_BASE+'/api/generate',{method:'POST',body:form});
+  const job=await start.json();if(!start.ok)throw new Error(job.error||'Could not start generation');
+  showStatus('AI job started. Waiting for the video…');btn.textContent='Generating…';
+  let done=false;
+  for(let i=0;i<90;i++){
+   await new Promise(r=>setTimeout(r,4000));
+   const r=await fetch(API_BASE+'/api/status/'+encodeURIComponent(job.requestId));const data=await r.json();
+   if(!r.ok)throw new Error(data.error||'Could not check generation');
+   if(data.status==='COMPLETED'){
+    const v=document.getElementById('resultVideo');v.src=data.videoUrl;v.style.display='block';
+    const a=document.getElementById('downloadLink');a.href=data.videoUrl;a.style.display='inline-block';
+    showStatus('Your video is ready!');done=true;break;
+   }
+   if(data.status==='FAILED')throw new Error(data.error||'The AI generation failed');
+   showStatus('Generating video… Status: '+data.status);
+  }
+  if(!done)showStatus('This video is taking longer than expected. Check again later; the request may still be processing.');
+ }catch(err){showStatus('Error: '+err.message);}
+ finally{btn.disabled=false;btn.textContent='✦ Generate Video';}
+}
+</script></body></html>
